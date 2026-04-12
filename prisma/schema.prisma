@@ -1,0 +1,94 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CUSTOMER
+  SELLER
+  ADMIN
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      Role     @default(CUSTOMER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  seller       Seller?
+  reservations Reservation[]
+  reviews      Review[]
+}
+
+model Seller {
+  id           String   @id @default(uuid())
+  userId       String   @unique
+  businessName String
+  address      String
+  phone        String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deals Deal[]
+}
+
+model Deal {
+  id                 String   @id @default(uuid())
+  sellerId           String
+  title              String
+  description        String?
+  originalPrice      Float
+  discountedPrice    Float
+  quantity           Int
+  pickupStartTime    DateTime
+  pickupEndTime      DateTime
+  imageUrl           String?
+  dietaryTags        String[]
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  seller       Seller        @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  reservations Reservation[]
+  reviews      Review[]
+}
+
+enum ReservationStatus {
+  PENDING
+  COMPLETED
+  CANCELLED
+}
+
+model Reservation {
+  id        String            @id @default(uuid())
+  userId    String
+  dealId    String
+  quantity  Int
+  status    ReservationStatus @default(PENDING)
+  orderCode String            @unique
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deal Deal @relation(fields: [dealId], references: [id], onDelete: Cascade)
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  userId    String
+  dealId    String
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deal Deal @relation(fields: [dealId], references: [id], onDelete: Cascade)
+}
