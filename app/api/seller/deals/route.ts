@@ -1,22 +1,15 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { verifyToken } from '@/lib/auth';
+import { requireRole } from '@/lib/api-auth';
 
 export async function GET(req: Request) {
+  const auth = await requireRole(req, ['SELLER']);
+  if (!auth.token) {
+    return auth.error;
+  }
+
   try {
-    const authHeader = req.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const token = authHeader.split(' ')[1];
-    const decoded = verifyToken(token) as { id: string, role: string } | null;
-
-    if (!decoded || decoded.role !== 'SELLER') {
-      return NextResponse.json({ error: 'Forbidden. Only sellers can access this.' }, { status: 403 });
-    }
-
-    const seller = await prisma.seller.findUnique({ where: { userId: decoded.id } });
+    const seller = await prisma.seller.findUnique({ where: { userId: auth.token.id } });
     
     if (!seller) {
       return NextResponse.json({ error: 'Seller profile not found' }, { status: 404 });

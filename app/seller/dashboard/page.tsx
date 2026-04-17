@@ -1,52 +1,73 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useEffect, useState } from "react"
+import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Plus, Package, Clock, LogOut } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { clearStoredSession, getStoredToken } from "@/lib/client-session"
+import { Plus, Package, Clock, LogOut, Star } from "lucide-react"
+
+async function fetchSellerDashboard(
+  router: ReturnType<typeof useRouter>
+) {
+  const token = await getStoredToken()
+  if (!token) {
+    router.push('/login')
+    return null
+  }
+
+  try {
+    const res = await fetch('/api/seller/dashboard', {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+
+    if (res.ok) {
+      return await res.json()
+    }
+
+    if (res.status === 401 || res.status === 403) {
+      router.push('/login')
+    }
+
+    return null
+  } catch (error) {
+    console.error("Failed to fetch seller dashboard", error)
+    return null
+  }
+}
 
 export default function SellerDashboard() {
   const router = useRouter()
   const [deals, setDeals] = useState<any[]>([])
+  const [seller, setSeller] = useState<any | null>(null)
+  const [reviews, setReviews] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [showAddForm, setShowAddForm] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [selectedImage, setSelectedImage] = useState<File | null>(null)
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
 
   useEffect(() => {
-    fetchDeals()
-  }, [])
-
-  const fetchDeals = async () => {
-    try {
-      const token = localStorage.getItem('token')
-      if (!token) {
-        router.push('/login')
-        return
+    async function loadDashboard() {
+      const data = await fetchSellerDashboard(router)
+      if (data) {
+        setSeller(data)
+        setDeals(data.deals ?? [])
+        setReviews(data.sellerReviews ?? [])
       }
-
-      const res = await fetch('/api/seller/deals', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-
-      if (res.ok) {
-        const data = await res.json()
-        setDeals(data)
-      } else if (res.status === 401 || res.status === 403) {
-        router.push('/login')
-      }
-    } catch (error) {
-      console.error("Failed to fetch deals", error)
-    } finally {
       setLoading(false)
     }
-  }
+
+    loadDashboard()
+  }, [router])
 
   const handleAddDeal = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -54,7 +75,30 @@ export default function SellerDashboard() {
     setError(null)
 
     const formData = new FormData(e.currentTarget)
-    const token = localStorage.getItem('token')
+    const token = await getStoredToken()
+    let imageUrl = ""
+
+    if (selectedImage) {
+      const uploadFormData = new FormData()
+      uploadFormData.append("file", selectedImage)
+
+      const uploadRes = await fetch("/api/uploads/deal-image", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: uploadFormData,
+      })
+
+      const uploadData = await uploadRes.json()
+      if (!uploadRes.ok) {
+        setError(uploadData.error || "Failed to upload image")
+        setSubmitting(false)
+        return
+      }
+
+      imageUrl = uploadData.imageUrl
+    }
 
     const data = {
       title: formData.get('title'),
@@ -64,7 +108,7 @@ export default function SellerDashboard() {
       quantity: formData.get('quantity'),
       pickupStartTime: formData.get('pickupStartTime'),
       pickupEndTime: formData.get('pickupEndTime'),
-      imageUrl: formData.get('imageUrl') || `https://picsum.photos/seed/${Math.random()}/400/300`,
+      imageUrl,
       dietaryTags: formData.get('dietaryTags') ? (formData.get('dietaryTags') as string).split(',').map(t => t.trim()) : []
     }
 
@@ -80,7 +124,16 @@ export default function SellerDashboard() {
 
       if (res.ok) {
         setShowAddForm(false)
-        fetchDeals() // Refresh the list
+        setLoading(true)
+        const dashboardData = await fetchSellerDashboard(router)
+        if (dashboardData) {
+          setSeller(dashboardData)
+          setDeals(dashboardData.deals ?? [])
+          setReviews(dashboardData.sellerReviews ?? [])
+        }
+        setLoading(false)
+        setSelectedImage(null)
+        setImagePreview(null)
       } else {
         const errData = await res.json()
         setError(errData.error || 'Failed to create deal')
@@ -92,9 +145,8 @@ export default function SellerDashboard() {
     }
   }
 
-  const handleLogout = () => {
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
+  const handleLogout = async () => {
+    await clearStoredSession()
     router.push('/')
   }
 
@@ -109,7 +161,9 @@ export default function SellerDashboard() {
         <div className="container mx-auto px-4 flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold">Seller Dashboard</h1>
-            <p className="text-emerald-100 mt-1">Manage your surplus food listings</p>
+            <p className="text-emerald-100 mt-1">
+              {seller?.businessName ? `${seller.businessName} seller portal` : "Manage your surplus food listings"}
+            </p>
           </div>
           <Button variant="outline" className="text-slate-900 bg-white hover:bg-slate-100" onClick={handleLogout}>
             <LogOut className="w-4 h-4 mr-2" /> Logout
@@ -118,10 +172,40 @@ export default function SellerDashboard() {
       </div>
 
       <div className="container mx-auto px-4 mt-8">
+        {seller && (
+          <Card className="mb-8 border-slate-200">
+            <CardHeader className="flex flex-row items-center justify-between gap-4">
+              <div>
+                <CardTitle>Seller Status</CardTitle>
+                <p className="text-sm text-slate-500 mt-2">
+                  Admin approval is required before new deals can go live.
+                </p>
+              </div>
+              <Badge
+                className={
+                  seller.approvalStatus === "APPROVED"
+                    ? "bg-emerald-100 text-emerald-800 hover:bg-emerald-100"
+                    : seller.approvalStatus === "REJECTED"
+                      ? "bg-red-100 text-red-700 hover:bg-red-100"
+                      : "bg-amber-100 text-amber-800 hover:bg-amber-100"
+                }
+              >
+                {seller.approvalStatus}
+              </Badge>
+            </CardHeader>
+            {seller.approvalNotes && (
+              <CardContent>
+                <p className="text-sm text-slate-600">Admin note: {seller.approvalNotes}</p>
+              </CardContent>
+            )}
+          </Card>
+        )}
+
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-slate-800">Your Active Deals</h2>
           <Button 
             className="bg-emerald-600 hover:bg-emerald-700"
+            disabled={seller?.approvalStatus !== "APPROVED"}
             onClick={() => setShowAddForm(!showAddForm)}
           >
             {showAddForm ? "Cancel" : <><Plus className="w-4 h-4 mr-2" /> Add New Deal</>}
@@ -176,6 +260,27 @@ export default function SellerDashboard() {
                 </div>
 
                 <div className="space-y-2">
+                  <Label htmlFor="imageFile">Deal image</Label>
+                  <Input
+                    id="imageFile"
+                    name="imageFile"
+                    type="file"
+                    accept="image/png,image/jpeg,image/jpg,image/webp"
+                    onChange={(event) => {
+                      const file = event.target.files?.[0] ?? null
+                      setSelectedImage(file)
+                      setImagePreview(file ? URL.createObjectURL(file) : null)
+                    }}
+                  />
+                  <p className="text-xs text-slate-500">Upload from your phone or computer. JPG, PNG, or WEBP up to 5MB.</p>
+                  {imagePreview ? (
+                    <div className="relative h-36 overflow-hidden rounded-xl border border-slate-200">
+                      <Image src={imagePreview} alt="Selected deal preview" fill className="object-cover" unoptimized />
+                    </div>
+                  ) : null}
+                </div>
+
+                <div className="space-y-2">
                   <Label htmlFor="description">Description</Label>
                   <Textarea id="description" name="description" placeholder="Describe what might be in the box..." rows={3} />
                 </div>
@@ -193,8 +298,8 @@ export default function SellerDashboard() {
           {deals.length === 0 ? (
             <div className="p-12 text-center text-slate-500">
               <Package className="w-12 h-12 mx-auto text-slate-300 mb-4" />
-              <p className="text-lg">You don't have any active deals.</p>
-              <p className="text-sm mt-1">Click "Add New Deal" to create your first listing.</p>
+              <p className="text-lg">You don&apos;t have any active deals.</p>
+              <p className="text-sm mt-1">Click &quot;Add New Deal&quot; to create your first listing.</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -242,6 +347,30 @@ export default function SellerDashboard() {
             </div>
           )}
         </div>
+
+        <Card className="mt-8">
+          <CardHeader>
+            <CardTitle>Latest Customer Reviews</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {reviews.length === 0 ? (
+              <p className="text-sm text-slate-500">No customer reviews yet.</p>
+            ) : (
+              reviews.map((review) => (
+                <div key={review.id} className="rounded-lg border p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="font-medium text-slate-900">{review.user?.name ?? "Customer"}</div>
+                    <div className="flex items-center gap-1 text-amber-500">
+                      <Star className="h-4 w-4 fill-current" />
+                      <span className="text-sm font-semibold">{review.rating}/5</span>
+                    </div>
+                  </div>
+                  <p className="mt-2 text-sm text-slate-600">{review.comment || "No written feedback."}</p>
+                </div>
+              ))
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   )

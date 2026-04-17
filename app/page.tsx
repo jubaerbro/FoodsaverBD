@@ -1,375 +1,418 @@
+﻿import Image from "next/image"
 import Link from "next/link"
-import Image from "next/image"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
-import { MapPin, Clock, Search, ShoppingBag, Utensils, Leaf, TrendingDown, Star } from "lucide-react"
+import { ArrowRight, Clock3, Leaf, MapPin, Quote, Sparkles, Star, TrendingDown, UtensilsCrossed } from "lucide-react"
+import { getHomepageDeals } from "@/lib/homepage-deals"
 
-export default function Home() {
+const impactStats = [
+  {
+    label: "Meals redirected",
+    value: "12,500+",
+    note: "Quality food recovered from daily surplus.",
+    icon: UtensilsCrossed,
+  },
+  {
+    label: "Customer savings",
+    value: "Tk 2.5M+",
+    note: "Real value returned to families, students, and commuters.",
+    icon: TrendingDown,
+  },
+  {
+    label: "CO2e avoided",
+    value: "31.2 tons",
+    note: "Waste reduction with measurable local impact.",
+    icon: Leaf,
+  },
+]
+
+const testimonials = [
+  {
+    quote:
+      "I now check FoodSaver before dinner the same way I check maps before leaving work. The experience feels curated, not random.",
+    name: "Sadia Rahman",
+    role: "Regular buyer, Dhaka",
+  },
+  {
+    quote:
+      "The platform helps us move surplus without cheapening our brand. It feels premium enough to match the kind of restaurant we run.",
+    name: "Tanvir Ahmed",
+    role: "Restaurant partner",
+  },
+  {
+    quote:
+      "The listings are clear, pickup is simple, and the pricing makes sense. For students, it feels like finding a smart shortcut rather than a compromise.",
+    name: "Fahim Mahmud",
+    role: "University student",
+  },
+]
+
+const faqs = [
+  {
+    question: "Is the food safe to eat?",
+    answer:
+      "Yes. Listings come from the same-day surplus of approved businesses. Food is still fresh and intended for normal sale, simply offered later in the day at a lower price.",
+  },
+  {
+    question: "How does payment work today?",
+    answer:
+      "You reserve through the platform and complete payment with the seller at pickup. The reservation flow is designed to be fast, with digital payment expansion possible later.",
+  },
+  {
+    question: "What should I expect from a surprise box?",
+    answer:
+      "A surprise box usually contains a curated mix of unsold items from that day. You trade exact selection for stronger pricing and a more sustainable purchase.",
+  },
+  {
+    question: "Can I cancel a reservation?",
+    answer:
+      "Yes. Reservations can be cancelled before the pickup window begins, giving the seller time to release the item back into inventory.",
+  },
+]
+
+function formatTaka(value: number) {
+  return `Tk ${new Intl.NumberFormat("en-BD", { maximumFractionDigits: 0 }).format(value)}`
+}
+
+export default async function Home() {
+  const { highlighted, featured, totalLiveDeals } = await getHomepageDeals()
+
   return (
-    <div className="flex flex-col min-h-screen">
-      {/* Hero Section */}
-      <section className="relative bg-emerald-900 text-white overflow-hidden">
-        <div className="absolute inset-0 z-0 opacity-20">
-          <Image
-            src="https://picsum.photos/seed/dhakafood/1920/1080"
-            alt="Food background"
-            fill
-            className="object-cover"
-            referrerPolicy="no-referrer"
-          />
-        </div>
-        <div className="container relative z-10 mx-auto px-4 py-24 md:py-32 lg:py-40 flex flex-col items-center text-center">
-          <Badge variant="secondary" className="mb-6 px-4 py-1.5 text-sm font-medium bg-emerald-800/50 text-emerald-100 border-emerald-700">
-            Now available in Dhaka & Chittagong
-          </Badge>
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold tracking-tight mb-6 max-w-4xl">
-            Save Food. <span className="text-emerald-400">Save Money.</span>
-          </h1>
-          <p className="text-lg md:text-xl text-emerald-100 mb-10 max-w-2xl leading-relaxed">
-            Discover delicious surplus meals from local restaurants, bakeries, and cafes at up to 70% off. Join the movement to reduce food waste in Bangladesh.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-            <Link href="/browse-deals">
-              <Button size="lg" className="w-full sm:w-auto text-lg h-14 px-8 bg-emerald-500 hover:bg-emerald-400 text-slate-900 font-bold">
-                Browse Deals Near You
-              </Button>
-            </Link>
-            <Link href="/partner-with-us">
-              <Button size="lg" variant="outline" className="w-full sm:w-auto text-lg h-14 px-8 border-emerald-500 text-emerald-50 hover:bg-emerald-800/50">
-                Partner With Us
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
+    <div className="flex min-h-screen flex-col overflow-x-hidden">
+      <section className="relative overflow-hidden px-4 pb-14 pt-8 md:pb-20 md:pt-14">
+        <div className="page-shell">
+          <div className="relative overflow-hidden rounded-[2.25rem] border border-[var(--border-strong)] bg-[linear-gradient(135deg,#5a2030_0%,#451523_52%,#f1d9dc_180%)] text-[var(--text-inverse)] shadow-[var(--shadow-xl)]">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,247,241,0.16),transparent_25%),radial-gradient(circle_at_bottom_right,rgba(216,165,168,0.22),transparent_22%)]" />
+            <div className="absolute -right-16 top-12 h-56 w-56 rounded-full border border-[var(--border-inverse)] bg-white/6 blur-2xl" />
+            <div className="absolute left-10 top-10 h-24 w-24 rounded-full bg-white/8 blur-xl" />
 
-      {/* How It Works Section */}
-      <section className="py-20 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">How FoodSaver BD Works</h2>
-            <p className="text-lg text-slate-600 max-w-2xl mx-auto">Three simple steps to enjoy great food while helping the planet.</p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-10 max-w-5xl mx-auto">
-            <div className="flex flex-col items-center text-center space-y-4">
-              <div className="w-20 h-20 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 mb-2">
-                <Search className="w-10 h-10" />
-              </div>
-              <h3 className="text-xl font-bold text-slate-900">1. Discover</h3>
-              <p className="text-slate-600">Find surplus food deals from your favorite local spots on our platform.</p>
-            </div>
-            <div className="flex flex-col items-center text-center space-y-4">
-              <div className="w-20 h-20 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 mb-2">
-                <ShoppingBag className="w-10 h-10" />
-              </div>
-              <h3 className="text-xl font-bold text-slate-900">2. Reserve</h3>
-              <p className="text-slate-600">Book your meal at a massive discount. Pay securely online or at pickup.</p>
-            </div>
-            <div className="flex flex-col items-center text-center space-y-4">
-              <div className="w-20 h-20 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 mb-2">
-                <Utensils className="w-10 h-10" />
-              </div>
-              <h3 className="text-xl font-bold text-slate-900">3. Pick Up</h3>
-              <p className="text-slate-600">Head to the store during the specified pickup window and enjoy your meal!</p>
-            </div>
-          </div>
-        </div>
-      </section>
+            <div className="relative grid gap-12 px-6 py-8 lg:grid-cols-[1.05fr_0.95fr] lg:px-10 lg:py-12">
+              <div className="flex flex-col justify-between">
+                <div className="reveal-up">
+                  <div className="section-kicker border-white/10 bg-white/10 text-[var(--text-inverse)]">
+                    Now serving premium surplus across Dhaka
+                  </div>
+                  <h1 className="mt-6 max-w-3xl text-balance text-5xl font-extrabold leading-[0.92] tracking-[-0.05em] md:text-7xl">
+                    Save beautifully made food
+                    <span className="editorial-accent ml-3 inline-block text-[var(--accent-soft)]">
+                      before the night ends.
+                    </span>
+                  </h1>
+                  <p className="mt-6 max-w-2xl text-base leading-8 text-[var(--text-inverse-muted)] md:text-lg">
+                    FoodSaver turns same-day surplus into a polished discovery experience. Reserve standout meals,
+                    pastry boxes, and grocery bundles from trusted local sellers at a lower price without the
+                    bargain-bin feel.
+                  </p>
+                </div>
 
-      {/* Featured Deals Section */}
-      <section className="py-20 bg-slate-50">
-        <div className="container mx-auto px-4">
-          <div className="flex justify-between items-end mb-10">
-            <div>
-              <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-2">Featured Deals</h2>
-              <p className="text-slate-600">Grab these hot offers before they&apos;re gone!</p>
-            </div>
-            <Link href="/browse-deals" className="hidden md:flex items-center text-emerald-600 font-semibold hover:text-emerald-700">
-              View all deals <span className="ml-2">→</span>
-            </Link>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {/* Dummy Deal 1 */}
-            <Card className="overflow-hidden hover:shadow-md transition-shadow">
-              <div className="relative h-48 w-full">
-                <Image src="https://picsum.photos/seed/bakerybd/400/300" alt="Bakery Items" fill className="object-cover" referrerPolicy="no-referrer" />
-                <Badge className="absolute top-3 left-3 bg-red-500 hover:bg-red-600">50% OFF</Badge>
-                <Badge variant="secondary" className="absolute top-3 right-3 bg-white/90 text-slate-900 font-bold">2 Left</Badge>
-              </div>
-              <CardHeader className="p-4 pb-2">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle className="text-lg">Assorted Pastry Box</CardTitle>
-                    <CardDescription className="text-emerald-700 font-medium">Dhaka Sweets & Bakery</CardDescription>
+                <div className="mt-8 flex flex-col gap-4 sm:flex-row reveal-up">
+                  <Link href="/browse-deals" className="premium-button px-7">
+                    Browse tonight&apos;s deals
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                  <Link href="/partner-with-us" className="premium-button premium-button-secondary px-7 !border-white/15 !bg-white/8 !text-[var(--text-inverse)]">
+                    Become a partner
+                  </Link>
+                </div>
+
+                <div className="mt-10 grid gap-4 md:grid-cols-3 reveal-up">
+                  <div className="rounded-[1.5rem] border border-[var(--border-inverse)] bg-white/8 p-4 backdrop-blur">
+                    <div className="text-xs uppercase tracking-[0.24em] text-[var(--text-inverse-muted)]">Average savings</div>
+                    <div className="mt-3 text-2xl font-semibold">Up to 70%</div>
+                  </div>
+                  <div className="rounded-[1.5rem] border border-[var(--border-inverse)] bg-white/8 p-4 backdrop-blur">
+                    <div className="text-xs uppercase tracking-[0.24em] text-[var(--text-inverse-muted)]">Pickup flow</div>
+                    <div className="mt-3 text-2xl font-semibold">Fast and local</div>
+                  </div>
+                  <div className="rounded-[1.5rem] border border-[var(--border-inverse)] bg-white/8 p-4 backdrop-blur">
+                    <div className="text-xs uppercase tracking-[0.24em] text-[var(--text-inverse-muted)]">Seller quality</div>
+                    <div className="mt-3 text-2xl font-semibold">Approval-gated</div>
                   </div>
                 </div>
-              </CardHeader>
-              <CardContent className="p-4 pt-0 space-y-2">
-                <div className="flex items-center text-sm text-slate-500">
-                  <MapPin className="w-4 h-4 mr-1" /> Gulshan 2 (1.2 km)
-                </div>
-                <div className="flex items-center text-sm text-slate-500">
-                  <Clock className="w-4 h-4 mr-1" /> Pickup: 8:00 PM - 10:00 PM
-                </div>
-              </CardContent>
-              <CardFooter className="p-4 pt-0 flex items-center justify-between">
-                <div>
-                  <span className="text-lg font-bold text-slate-900">৳250</span>
-                  <span className="text-sm text-slate-400 line-through ml-2">৳500</span>
-                </div>
-                <Button size="sm">Reserve</Button>
-              </CardFooter>
-            </Card>
-
-            {/* Dummy Deal 2 */}
-            <Card className="overflow-hidden hover:shadow-md transition-shadow">
-              <div className="relative h-48 w-full">
-                <Image src="https://picsum.photos/seed/biryani/400/300" alt="Biryani" fill className="object-cover" referrerPolicy="no-referrer" />
-                <Badge className="absolute top-3 left-3 bg-red-500 hover:bg-red-600">40% OFF</Badge>
-                <Badge variant="secondary" className="absolute top-3 right-3 bg-white/90 text-slate-900 font-bold">5 Left</Badge>
               </div>
-              <CardHeader className="p-4 pb-2">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle className="text-lg">Chicken Biryani Pack</CardTitle>
-                    <CardDescription className="text-emerald-700 font-medium">Nawab&apos;s Kitchen</CardDescription>
+
+              <div className="relative reveal-up">
+                <div className="relative mx-auto max-w-[38rem]">
+                  <div className="absolute -left-4 top-10 hidden rounded-[1.4rem] border border-white/10 bg-white/10 px-4 py-3 text-sm text-[var(--text-inverse)] backdrop-blur md:block">
+                    <div className="inline-flex items-center gap-2">
+                      <Sparkles className="h-4 w-4 text-[var(--accent-soft)]" />
+                      Curated daily at closing hour
+                    </div>
+                  </div>
+
+                  <div className="surface-card-dark hover-lift overflow-hidden rounded-[2rem] p-3">
+                    <div className="relative aspect-[4/5] overflow-hidden rounded-[1.5rem]">
+                      <Image
+                        src="https://picsum.photos/id/292/3852/2556"
+                        alt="Editorial plated food arrangement"
+                        fill
+                        className="object-cover"
+                        referrerPolicy="no-referrer"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#2a0d17]/70 via-transparent to-transparent" />
+                    </div>
+
+                    <div className="-mt-20 ml-auto mr-3 max-w-[17rem] rounded-[1.6rem] border border-white/10 bg-[rgba(255,247,241,0.12)] p-5 backdrop-blur-xl">
+                      <div className="premium-badge !border-white/10 !bg-white/10 !text-[var(--text-inverse)]">
+                        {highlighted ? "Highlighted tonight" : "Live marketplace"}
+                      </div>
+                      <h2 className="mt-4 text-2xl font-semibold leading-tight text-[var(--text-inverse)]">
+                        {highlighted ? highlighted.title : "Fresh deals appear here as sellers publish them."}
+                      </h2>
+                      <p className="mt-3 text-sm leading-7 text-[var(--text-inverse-muted)]">
+                        {highlighted
+                          ? `${highlighted.vendor} · Pickup ${highlighted.pickup} · ${highlighted.discount}.`
+                          : "The homepage now reflects real inventory only. Once approved sellers add deals, they will show up here automatically."}
+                      </p>
+                      {highlighted ? (
+                        <Link
+                          href={`/products/${highlighted.id}`}
+                          className="mt-4 inline-flex text-sm font-semibold text-[var(--text-inverse)] underline-offset-4 hover:underline"
+                        >
+                          View highlighted deal
+                        </Link>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  <div className="absolute -bottom-6 -left-2 rounded-[1.5rem] border border-[var(--card-border-strong)] bg-[var(--card-bg-strong)] px-5 py-4 shadow-[var(--shadow-md)] md:left-[-2.5rem]">
+                    <div className="text-xs uppercase tracking-[0.2em] text-[var(--text-tertiary)]">Tonight in Dhaka</div>
+                    <div className="mt-2 flex items-center gap-2 text-[var(--text-primary)]">
+                      <MapPin className="h-4 w-4 text-[var(--brand-soft)]" />
+                      <span className="font-medium">
+                        {totalLiveDeals} live deal{totalLiveDeals === 1 ? "" : "s"} across approved sellers
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </CardHeader>
-              <CardContent className="p-4 pt-0 space-y-2">
-                <div className="flex items-center text-sm text-slate-500">
-                  <MapPin className="w-4 h-4 mr-1" /> Dhanmondi (3.5 km)
-                </div>
-                <div className="flex items-center text-sm text-slate-500">
-                  <Clock className="w-4 h-4 mr-1" /> Pickup: 10:30 PM - 11:30 PM
-                </div>
-              </CardContent>
-              <CardFooter className="p-4 pt-0 flex items-center justify-between">
-                <div>
-                  <span className="text-lg font-bold text-slate-900">৳180</span>
-                  <span className="text-sm text-slate-400 line-through ml-2">৳300</span>
-                </div>
-                <Button size="sm">Reserve</Button>
-              </CardFooter>
-            </Card>
-
-            {/* Dummy Deal 3 */}
-            <Card className="overflow-hidden hover:shadow-md transition-shadow">
-              <div className="relative h-48 w-full">
-                <Image src="https://picsum.photos/seed/cafe/400/300" alt="Cafe Food" fill className="object-cover" referrerPolicy="no-referrer" />
-                <Badge className="absolute top-3 left-3 bg-red-500 hover:bg-red-600">60% OFF</Badge>
-                <Badge variant="secondary" className="absolute top-3 right-3 bg-white/90 text-slate-900 font-bold">1 Left</Badge>
               </div>
-              <CardHeader className="p-4 pb-2">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle className="text-lg">Surprise Sandwich Box</CardTitle>
-                    <CardDescription className="text-emerald-700 font-medium">The Daily Roast</CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="p-4 pt-0 space-y-2">
-                <div className="flex items-center text-sm text-slate-500">
-                  <MapPin className="w-4 h-4 mr-1" /> Banani (2.1 km)
-                </div>
-                <div className="flex items-center text-sm text-slate-500">
-                  <Clock className="w-4 h-4 mr-1" /> Pickup: 7:00 PM - 8:30 PM
-                </div>
-              </CardContent>
-              <CardFooter className="p-4 pt-0 flex items-center justify-between">
-                <div>
-                  <span className="text-lg font-bold text-slate-900">৳120</span>
-                  <span className="text-sm text-slate-400 line-through ml-2">৳300</span>
-                </div>
-                <Button size="sm">Reserve</Button>
-              </CardFooter>
-            </Card>
-
-            {/* Dummy Deal 4 */}
-            <Card className="overflow-hidden hover:shadow-md transition-shadow">
-              <div className="relative h-48 w-full">
-                <Image src="https://picsum.photos/seed/grocery/400/300" alt="Groceries" fill className="object-cover" referrerPolicy="no-referrer" />
-                <Badge className="absolute top-3 left-3 bg-red-500 hover:bg-red-600">30% OFF</Badge>
-                <Badge variant="secondary" className="absolute top-3 right-3 bg-white/90 text-slate-900 font-bold">10+ Left</Badge>
-              </div>
-              <CardHeader className="p-4 pb-2">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle className="text-lg">Fresh Produce Bundle</CardTitle>
-                    <CardDescription className="text-emerald-700 font-medium">Green Mart</CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="p-4 pt-0 space-y-2">
-                <div className="flex items-center text-sm text-slate-500">
-                  <MapPin className="w-4 h-4 mr-1" /> Mirpur (5.0 km)
-                </div>
-                <div className="flex items-center text-sm text-slate-500">
-                  <Clock className="w-4 h-4 mr-1" /> Pickup: All Day
-                </div>
-              </CardContent>
-              <CardFooter className="p-4 pt-0 flex items-center justify-between">
-                <div>
-                  <span className="text-lg font-bold text-slate-900">৳350</span>
-                  <span className="text-sm text-slate-400 line-through ml-2">৳500</span>
-                </div>
-                <Button size="sm">Reserve</Button>
-              </CardFooter>
-            </Card>
-          </div>
-          
-          <div className="mt-8 text-center md:hidden">
-            <Link href="/browse-deals">
-              <Button variant="outline" className="w-full">View all deals</Button>
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Impact Section */}
-      <section className="py-20 bg-emerald-900 text-white">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-12">Our Impact Together</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-            <div className="p-6 rounded-2xl bg-emerald-800/50 border border-emerald-700/50">
-              <Utensils className="w-12 h-12 mx-auto mb-4 text-emerald-400" />
-              <div className="text-4xl font-extrabold mb-2">12,500+</div>
-              <div className="text-emerald-100 font-medium">Meals Saved</div>
-            </div>
-            <div className="p-6 rounded-2xl bg-emerald-800/50 border border-emerald-700/50">
-              <TrendingDown className="w-12 h-12 mx-auto mb-4 text-emerald-400" />
-              <div className="text-4xl font-extrabold mb-2">৳2.5M+</div>
-              <div className="text-emerald-100 font-medium">Money Saved by Users</div>
-            </div>
-            <div className="p-6 rounded-2xl bg-emerald-800/50 border border-emerald-700/50">
-              <Leaf className="w-12 h-12 mx-auto mb-4 text-emerald-400" />
-              <div className="text-4xl font-extrabold mb-2">31.2</div>
-              <div className="text-emerald-100 font-medium">Tons of CO2e Prevented</div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section className="py-20 bg-white">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl md:text-4xl font-bold text-center text-slate-900 mb-12">What People Are Saying</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            <Card className="bg-slate-50 border-none shadow-sm">
-              <CardHeader>
-                <div className="flex text-amber-400 mb-2">
-                  <Star className="w-4 h-4 fill-current" /><Star className="w-4 h-4 fill-current" /><Star className="w-4 h-4 fill-current" /><Star className="w-4 h-4 fill-current" /><Star className="w-4 h-4 fill-current" />
-                </div>
-                <CardDescription className="text-base text-slate-700 italic">
-                  &quot;I love picking up a surprise bakery box on my way home from work. Great food, amazing price, and I feel good about not letting it go to waste!&quot;
-                </CardDescription>
-              </CardHeader>
-              <CardFooter>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-emerald-200 flex items-center justify-center text-emerald-700 font-bold">S</div>
-                  <div>
-                    <div className="font-semibold text-slate-900">Sadia R.</div>
-                    <div className="text-xs text-slate-500">Dhaka</div>
+      <section className="px-4 py-16 md:py-24">
+        <div className="page-shell">
+          <div className="mb-10 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+            <div className="max-w-2xl">
+              <div className="section-kicker">Featured deals</div>
+              <h2 className="section-title mt-5 max-w-3xl text-[var(--text-primary)]">
+                Tonight&apos;s best-value picks,
+                <span className="editorial-accent ml-3 text-[var(--brand-soft)]">presented with polish.</span>
+              </h2>
+              <p className="section-subtitle mt-5">
+                A sharper card system, stronger image treatment, and clearer pricing hierarchy make each offer feel
+                deliberate instead of disposable.
+              </p>
+            </div>
+            <Link href="/browse-deals" className="premium-button w-fit px-7">
+              Explore all deals
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+
+          {featured.length > 0 ? (
+            <div className="grid gap-6 lg:grid-cols-3">
+              {featured.map((deal, index) => (
+                <article
+                  key={deal.id}
+                  className={`surface-card-strong hover-lift group overflow-hidden rounded-[1.9rem] ${index === 0 ? "lg:col-span-2 lg:grid lg:grid-cols-[1.1fr_0.9fr]" : ""}`}
+                >
+                  <div className={`relative overflow-hidden ${index === 0 ? "min-h-[24rem]" : "h-72"}`}>
+                    <Image
+                      src={deal.imageUrl}
+                      alt={deal.title}
+                      fill
+                      className="object-cover transition duration-500 ease-[var(--ease-premium)] group-hover:scale-[1.04]"
+                      referrerPolicy="no-referrer"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#2a0d17]/65 via-[#2a0d17]/10 to-transparent" />
+                    <div className="absolute left-5 top-5 flex flex-wrap gap-2">
+                      <span className="premium-badge !bg-[var(--accent-soft)] !text-[var(--brand-strong)]">{deal.discount}</span>
+                      <span className="premium-badge !bg-white/85 !text-[var(--text-primary)]">{deal.stock}</span>
+                    </div>
+                    <div className="absolute bottom-5 left-5 right-5">
+                      <div className="text-xs uppercase tracking-[0.24em] text-white/75">{deal.highlight}</div>
+                      <div className="mt-2 flex items-end gap-3 text-white">
+                        <span className="text-3xl font-semibold">{formatTaka(deal.price)}</span>
+                        <span className="pb-1 text-sm text-white/65 line-through">{formatTaka(deal.originalPrice)}</span>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </CardFooter>
-            </Card>
-            <Card className="bg-slate-50 border-none shadow-sm">
-              <CardHeader>
-                <div className="flex text-amber-400 mb-2">
-                  <Star className="w-4 h-4 fill-current" /><Star className="w-4 h-4 fill-current" /><Star className="w-4 h-4 fill-current" /><Star className="w-4 h-4 fill-current" /><Star className="w-4 h-4 fill-current" />
-                </div>
-                <CardDescription className="text-base text-slate-700 italic">
-                  &quot;As a restaurant owner, throwing away perfectly good food at the end of the night broke my heart. FoodSaver BD helps us recover costs and find new customers.&quot;
-                </CardDescription>
-              </CardHeader>
-              <CardFooter>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-blue-200 flex items-center justify-center text-blue-700 font-bold">T</div>
-                  <div>
-                    <div className="font-semibold text-slate-900">Tanvir A.</div>
-                    <div className="text-xs text-slate-500">Restaurant Owner</div>
+
+                  <div className="flex flex-col justify-between p-6 md:p-7">
+                    <div>
+                      <div className="premium-badge w-fit">{deal.vendor}</div>
+                      <h3 className="mt-4 text-2xl font-semibold tracking-[var(--tracking-heading)] text-[var(--text-primary)]">
+                        {deal.title}
+                      </h3>
+                      <div className="mt-5 grid gap-3 text-sm text-[var(--text-secondary)]">
+                        <div className="flex items-center gap-2">
+                          <MapPin className="h-4 w-4 text-[var(--brand-soft)]" />
+                          <span>
+                            {deal.location} · {deal.distance}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Clock3 className="h-4 w-4 text-[var(--brand-soft)]" />
+                          <span>Pickup {deal.pickup}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-8 flex items-center justify-between border-t border-[var(--card-border)] pt-5">
+                      <div>
+                        <div className="text-xs uppercase tracking-[0.2em] text-[var(--text-tertiary)]">Reserve tonight</div>
+                        <div className="mt-1 text-sm text-[var(--text-secondary)]">Fast pickup, lower waste, better value</div>
+                      </div>
+                      <Link href={`/products/${deal.id}`} className="premium-button px-6">
+                        View deal
+                      </Link>
+                    </div>
                   </div>
-                </div>
-              </CardFooter>
-            </Card>
-            <Card className="bg-slate-50 border-none shadow-sm">
-              <CardHeader>
-                <div className="flex text-amber-400 mb-2">
-                  <Star className="w-4 h-4 fill-current" /><Star className="w-4 h-4 fill-current" /><Star className="w-4 h-4 fill-current" /><Star className="w-4 h-4 fill-current" /><Star className="w-4 h-4 fill-current" />
-                </div>
-                <CardDescription className="text-base text-slate-700 italic">
-                  &quot;The app is so easy to use. I check it every afternoon to see what&apos;s available for dinner. Highly recommended for students on a budget!&quot;
-                </CardDescription>
-              </CardHeader>
-              <CardFooter>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-purple-200 flex items-center justify-center text-purple-700 font-bold">F</div>
-                  <div>
-                    <div className="font-semibold text-slate-900">Fahim M.</div>
-                    <div className="text-xs text-slate-500">University Student</div>
-                  </div>
-                </div>
-              </CardFooter>
-            </Card>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div className="surface-card-strong rounded-[1.9rem] p-8 text-center">
+              <h3 className="text-2xl font-semibold text-[var(--text-primary)]">No featured deals live yet</h3>
+              <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-[var(--text-secondary)]">
+                Demo cards have been removed. This section now shows only real backend deals from approved sellers.
+              </p>
+              <Link href="/partner-with-us" className="premium-button mt-6 inline-flex px-7">
+                Add seller inventory
+              </Link>
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section className="px-4 py-16 md:py-24">
+        <div className="page-shell">
+          <div className="section-dark-elevated overflow-hidden rounded-[2.2rem] border border-[var(--border-inverse)] px-6 py-8 shadow-[var(--shadow-xl)] md:px-10 md:py-10">
+            <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-end">
+              <div>
+                <div className="section-kicker border-white/10 bg-white/10 text-[var(--text-inverse)]">Impact at scale</div>
+                <h2 className="mt-5 text-4xl font-extrabold leading-[0.95] tracking-[var(--tracking-tight)] md:text-6xl">
+                  A stronger marketplace
+                  <span className="editorial-accent ml-3 text-[var(--accent-soft)]">with measurable effect.</span>
+                </h2>
+                <p className="text-inverse-soft mt-5 max-w-xl text-base leading-8">
+                  The platform works when buyers save, sellers recover value, and better food stays in circulation.
+                </p>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-3">
+                {impactStats.map((item) => {
+                  const Icon = item.icon
+                  return (
+                    <div key={item.label} className="dark-glass-card rounded-[1.6rem] p-5">
+                      <Icon className="h-6 w-6 text-[var(--accent-soft)]" />
+                      <div className="mt-5 text-3xl font-semibold">{item.value}</div>
+                      <div className="text-inverse-strong mt-2 text-sm font-medium">{item.label}</div>
+                      <p className="text-inverse-soft mt-3 text-sm leading-7">{item.note}</p>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* FAQ Section */}
-      <section className="py-20 bg-slate-50">
-        <div className="container mx-auto px-4 max-w-3xl">
-          <h2 className="text-3xl md:text-4xl font-bold text-center text-slate-900 mb-10">Frequently Asked Questions</h2>
-          <Accordion type="single" collapsible className="w-full bg-white rounded-xl border p-2">
-            <AccordionItem value="item-1" className="border-b-0">
-              <AccordionTrigger className="px-4 hover:no-underline hover:bg-slate-50 rounded-lg">Is the food safe to eat?</AccordionTrigger>
-              <AccordionContent className="px-4 text-slate-600">
-                Absolutely! The food listed on FoodSaver BD is fresh surplus from that day. It&apos;s the exact same high-quality food you would buy at full price, just unsold at the end of the business day or shift.
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="item-2" className="border-b-0 border-t">
-              <AccordionTrigger className="px-4 hover:no-underline hover:bg-slate-50 rounded-lg">How do I pay?</AccordionTrigger>
-              <AccordionContent className="px-4 text-slate-600">
-                Currently, you can reserve a meal on the platform and pay directly at the store when you pick it up. We are working on integrating digital payments like bKash and Nagad very soon!
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="item-3" className="border-b-0 border-t">
-              <AccordionTrigger className="px-4 hover:no-underline hover:bg-slate-50 rounded-lg">What is a &quot;Surprise Box&quot;?</AccordionTrigger>
-              <AccordionContent className="px-4 text-slate-600">
-                Because businesses don&apos;t always know exactly what will be left over, many offer a &quot;Surprise Box&quot;. You&apos;ll get a selection of their delicious items at a fraction of the cost. It&apos;s a fun and tasty surprise!
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="item-4" className="border-b-0 border-t">
-              <AccordionTrigger className="px-4 hover:no-underline hover:bg-slate-50 rounded-lg">Can I cancel my reservation?</AccordionTrigger>
-              <AccordionContent className="px-4 text-slate-600">
-                Yes, you can cancel up to 2 hours before the pickup window begins. This gives the store a chance to offer the food to someone else.
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
+      <section className="px-4 py-16 md:py-24">
+        <div className="page-shell grid gap-10 lg:grid-cols-[0.9fr_1.1fr]">
+          <div className="max-w-xl">
+            <div className="section-kicker">Testimonials</div>
+            <h2 className="section-title mt-5 text-[var(--text-primary)]">
+              Trusted by buyers and sellers
+              <span className="editorial-accent ml-3 text-[var(--brand-soft)]">who care about quality.</span>
+            </h2>
+            <p className="section-subtitle mt-5">
+              The experience should feel refined enough for premium brands and practical enough for repeat daily use.
+            </p>
+          </div>
+
+          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+            {testimonials.map((item) => (
+              <article key={item.name} className="surface-card hover-lift rounded-[1.7rem] p-6">
+                <Quote className="h-6 w-6 text-[var(--brand-soft)]" />
+                <div className="mt-5 flex gap-1 text-[var(--accent-strong)]">
+                  {Array.from({ length: 5 }).map((_, index) => (
+                    <Star key={index} className="h-4 w-4 fill-current" />
+                  ))}
+                </div>
+                <p className="mt-5 text-sm leading-8 text-[var(--text-secondary)]">&quot;{item.quote}&quot;</p>
+                <div className="mt-6 border-t border-[var(--card-border)] pt-5">
+                  <div className="font-semibold text-[var(--text-primary)]">{item.name}</div>
+                  <div className="mt-1 text-sm text-[var(--text-tertiary)]">{item.role}</div>
+                </div>
+              </article>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* CTA Banner */}
-      <section className="py-24 bg-emerald-600 text-white text-center">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl md:text-5xl font-bold mb-6">Ready to make a difference?</h2>
-          <p className="text-xl text-emerald-100 mb-10 max-w-2xl mx-auto">
-            Whether you&apos;re hungry for a deal or a business looking to reduce waste, there&apos;s a place for you here.
-          </p>
-          <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <Link href="/browse-deals">
-              <Button size="lg" className="w-full sm:w-auto text-lg h-14 px-8 bg-white text-emerald-700 hover:bg-slate-100 font-bold">
-                Start Saving Food
-              </Button>
-            </Link>
-            <Link href="/partner-with-us">
-              <Button size="lg" variant="outline" className="w-full sm:w-auto text-lg h-14 px-8 border-white text-white hover:bg-emerald-700">
-                Become a Partner
-              </Button>
-            </Link>
+      <section className="px-4 py-16 md:py-24">
+        <div className="page-shell">
+          <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr]">
+            <div className="max-w-xl">
+              <div className="section-kicker">FAQ</div>
+              <h2 className="section-title mt-5 text-[var(--text-primary)]">
+                Clear answers,
+                <span className="editorial-accent ml-3 text-[var(--brand-soft)]">without the startup noise.</span>
+              </h2>
+              <p className="section-subtitle mt-5">
+                The model is simple: better presentation for surplus food, better economics for buyers and sellers.
+              </p>
+            </div>
+
+            <div className="surface-card-strong rounded-[1.9rem] p-3 md:p-4">
+              <Accordion type="single" collapsible className="w-full">
+                {faqs.map((item, index) => (
+                  <AccordionItem
+                    key={item.question}
+                    value={`item-${index}`}
+                    className="overflow-hidden rounded-[1.3rem] border-0 px-2 py-1 data-[state=open]:bg-[rgba(216,165,168,0.08)]"
+                  >
+                    <AccordionTrigger className="px-4 text-left text-base font-semibold text-[var(--text-primary)] hover:no-underline">
+                      {item.question}
+                    </AccordionTrigger>
+                    <AccordionContent className="px-4 pb-5 text-sm leading-8 text-[var(--text-secondary)]">
+                      {item.answer}
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="px-4 pb-20 pt-8 md:pb-24">
+        <div className="page-shell">
+          <div className="overflow-hidden rounded-[2.1rem] border border-[var(--card-border-strong)] bg-[var(--section-soft)] px-6 py-10 shadow-[var(--shadow-lg)] md:px-10">
+            <div className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center">
+              <div className="max-w-2xl">
+                <div className="section-kicker">Join the marketplace</div>
+                <h2 className="mt-5 text-4xl font-extrabold leading-[0.95] tracking-[var(--tracking-tight)] text-[var(--text-primary)] md:text-5xl">
+                  Better food economics,
+                  <span className="editorial-accent ml-3 text-[var(--brand-soft)]">designed for repeat use.</span>
+                </h2>
+                <p className="mt-5 text-base leading-8 text-[var(--text-secondary)]">
+                  Browse what is available tonight or onboard your business into a marketplace that treats surplus
+                  inventory like a premium opportunity instead of an afterthought.
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-4 sm:flex-row lg:flex-col">
+                <Link href="/browse-deals" className="premium-button justify-center px-7">
+                  Browse deals
+                </Link>
+                <Link href="/partner-with-us" className="premium-button premium-button-secondary justify-center px-7">
+                  Apply as seller
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
       </section>

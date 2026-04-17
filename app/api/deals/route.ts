@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
+import { SellerApprovalStatus } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
-import { verifyToken } from '@/lib/auth';
+import { requireRole } from '@/lib/api-auth';
+import { withLivePricing } from '@/lib/live-pricing';
 
 export async function GET(req: Request) {
   try {
@@ -9,15 +11,31 @@ export async function GET(req: Request) {
     
     // In a real app, you would filter by category, location, etc.
     const deals = await prisma.deal.findMany({
+      where: {
+        seller: {
+          approvalStatus: SellerApprovalStatus.APPROVED,
+        },
+      },
       include: {
-        seller: true,
+        seller: {
+          include: {
+            sellerReviews: {
+              include: {
+                user: true,
+              },
+              orderBy: {
+                createdAt: 'desc',
+              },
+            },
+          },
+        },
       },
       orderBy: {
         createdAt: 'desc',
       },
     });
 
-    return NextResponse.json(deals);
+    return NextResponse.json(deals.map((deal) => withLivePricing(deal)));
   } catch (error) {
     console.error('Fetch deals error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -25,42 +43,66 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+  const auth = await requireRole(req, ['SELLER', 'ADMIN']);
+  if (!auth.token) {
+    return auth.error;
+  }
+
   try {
-    const authHeader = req.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const seller = await prisma.seller.findUnique({ where: { userId: auth.token.id } });
+    if (!seller) {
+      return NextResponse.json({ error: 'Seller profile not found' }, { status: 404 });
     }
 
-    const token = authHeader.split(' ')[1];
-    const decoded = verifyToken(token) as { id: string, role: string } | null;
-
-    if (!decoded || (decoded.role !== 'SELLER' && decoded.role !== 'ADMIN')) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
-
-    const seller = await prisma.seller.findUnique({ where: { userId: decoded.id } });
-    if (!seller && decoded.role !== 'ADMIN') {
-       return NextResponse.json({ error: 'Seller profile not found' }, { status: 404 });
+    if (seller.approvalStatus !== SellerApprovalStatus.APPROVED) {
+      return NextResponse.json({ error: 'Seller account is pending admin approval' }, { status: 403 });
     }
 
     const { title, description, originalPrice, discountedPrice, quantity, pickupStartTime, pickupEndTime, imageUrl, dietaryTags } = await req.json();
+    const originalPriceValue = Number(originalPrice);
+    const discountedPriceValue = Number(discountedPrice);
+    const quantityValue = Number(quantity);
+    const pickupStart = new Date(pickupStartTime);
+    const pickupEnd = new Date(pickupEndTime);
 
-    if (!title || !originalPrice || !discountedPrice || !quantity || !pickupStartTime || !pickupEndTime) {
+    if (!title || !pickupStartTime || !pickupEndTime) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
+    if (
+      Number.isNaN(originalPriceValue) ||
+      Number.isNaN(discountedPriceValue) ||
+      Number.isNaN(quantityValue) ||
+      Number.isNaN(pickupStart.getTime()) ||
+      Number.isNaN(pickupEnd.getTime())
+    ) {
+      return NextResponse.json({ error: 'Invalid deal data' }, { status: 400 });
+    }
+
+    if (originalPriceValue <= 0 || discountedPriceValue <= 0 || quantityValue <= 0) {
+      return NextResponse.json({ error: 'Prices and quantity must be greater than zero' }, { status: 400 });
+    }
+
+    if (discountedPriceValue > originalPriceValue) {
+      return NextResponse.json({ error: 'Discounted price cannot exceed original price' }, { status: 400 });
+    }
+
+    if (pickupEnd <= pickupStart) {
+      return NextResponse.json({ error: 'Pickup end time must be after pickup start time' }, { status: 400 });
     }
 
     const deal = await prisma.deal.create({
       data: {
-        sellerId: seller ? seller.id : 'admin-override', // In a real app, handle admin creating deals properly
-        title,
+        sellerId: seller.id,
+        title: String(title).trim(),
         description,
-        originalPrice: parseFloat(originalPrice),
-        discountedPrice: parseFloat(discountedPrice),
-        quantity: parseInt(quantity, 10),
-        pickupStartTime: new Date(pickupStartTime),
-        pickupEndTime: new Date(pickupEndTime),
+        originalPrice: originalPriceValue,
+        discountedPrice: discountedPriceValue,
+        quantity: Math.floor(quantityValue),
+        pickupStartTime: pickupStart,
+        pickupEndTime: pickupEnd,
         imageUrl,
-        dietaryTags: dietaryTags || [],
+        dietaryTags: Array.isArray(dietaryTags) ? dietaryTags.filter((tag) => typeof tag === 'string' && tag.trim()).map((tag) => tag.trim()) : [],
       },
     });
 

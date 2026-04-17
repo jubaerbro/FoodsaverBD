@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { createSupabaseBrowserClient } from "@/lib/supabase"
 import { CheckCircle2, TrendingUp, Users, Leaf } from "lucide-react"
 
 export default function PartnerWithUs() {
@@ -22,22 +23,35 @@ export default function PartnerWithUs() {
     const formData = new FormData(e.currentTarget)
     const data = {
       name: formData.get('ownerName'),
-      email: formData.get('email') || `seller_${Date.now()}@example.com`, // Fallback if no email
-      password: 'defaultPassword123!', // In a real app, they'd set this later or here
+      email: formData.get('email'),
       role: 'SELLER',
+      mode: 'signup',
       businessName: formData.get('shopName'),
       phone: formData.get('phone'),
       address: formData.get('area'),
     }
 
     try {
-      const res = await fetch('/api/auth/register', {
+      const res = await fetch('/api/auth/magic-link', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       })
 
       if (res.ok) {
+        const supabase = createSupabaseBrowserClient()
+        const { error: authError } = await supabase.auth.signInWithOtp({
+          email: String(data.email),
+          options: {
+            emailRedirectTo: `${window.location.origin}/auth/callback`,
+          },
+        })
+
+        if (authError) {
+          setError(authError.message)
+          return
+        }
+
         setSuccess(true)
       } else {
         const errData = await res.json()
@@ -135,7 +149,7 @@ export default function PartnerWithUs() {
                         <CheckCircle2 className="w-8 h-8" />
                       </div>
                       <h3 className="text-2xl font-bold text-slate-900 mb-2">Application Received!</h3>
-                      <p className="text-slate-600">Thank you for applying. Our team will contact you shortly to complete the onboarding process.</p>
+                      <p className="text-slate-600">We sent a magic link to your email. Open it to activate your seller account. Your shop will remain pending until admin approval.</p>
                     </div>
                   ) : (
                     <form className="space-y-6" onSubmit={handleSubmit}>
@@ -158,8 +172,8 @@ export default function PartnerWithUs() {
                             <Input id="phone" name="phone" type="tel" placeholder="01XXXXXXXXX" required />
                           </div>
                           <div className="space-y-2">
-                            <Label htmlFor="email">Email Address</Label>
-                            <Input id="email" name="email" type="email" placeholder="contact@shop.com" />
+                            <Label htmlFor="email">Email Address *</Label>
+                            <Input id="email" name="email" type="email" placeholder="contact@shop.com" required />
                           </div>
                         </div>
 

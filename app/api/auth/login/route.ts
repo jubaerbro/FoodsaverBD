@@ -1,31 +1,49 @@
+import bcrypt from 'bcryptjs';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import bcrypt from 'bcryptjs';
-import { signToken } from '@/lib/auth';
+import { signAppToken } from '@/lib/auth';
 
 export async function POST(req: Request) {
   try {
     const { email, password } = await req.json();
+    const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
+    const normalizedPassword = typeof password === 'string' ? password : '';
 
-    if (!email || !password) {
-      return NextResponse.json({ error: 'Missing email or password' }, { status: 400 });
+    if (!normalizedEmail || !normalizedPassword) {
+      return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
     }
 
-    const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) {
-      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
+    const user = await prisma.user.findUnique({
+      where: { email: normalizedEmail },
+    });
+
+    if (!user?.password) {
+      return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
     }
 
-    const isValidPassword = await bcrypt.compare(password, user.password);
-    if (!isValidPassword) {
-      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
+    const isValid = await bcrypt.compare(normalizedPassword, user.password);
+    if (!isValid) {
+      return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
     }
 
-    const token = signToken({ id: user.id, role: user.role });
+    const authToken = signAppToken({
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+    });
 
-    return NextResponse.json({ user: { id: user.id, email: user.email, name: user.name, role: user.role }, token });
+    return NextResponse.json({
+      token: authToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+      },
+    });
   } catch (error) {
-    console.error('Login error:', error);
+    console.error('Password login error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

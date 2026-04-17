@@ -13,31 +13,46 @@ enum Role {
   ADMIN
 }
 
+enum SellerApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
-  name      String
-  role      Role     @default(CUSTOMER)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             String   @id @default(uuid())
+  email          String   @unique
+  supabaseUserId String?  @unique
+  password       String?
+  name           String
+  role           Role     @default(CUSTOMER)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   seller       Seller?
   reservations Reservation[]
   reviews      Review[]
+  sellerReviews SellerReview[]
+  approvedSellers Seller[] @relation("SellerApprovedBy")
 }
 
 model Seller {
-  id           String   @id @default(uuid())
-  userId       String   @unique
-  businessName String
-  address      String
-  phone        String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id                 String               @id @default(uuid())
+  userId             String               @unique
+  businessName       String
+  address            String
+  phone              String
+  approvalStatus     SellerApprovalStatus @default(PENDING)
+  approvalNotes      String?
+  approvedAt         DateTime?
+  approvedByUserId   String?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
 
-  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  deals Deal[]
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  approvedBy      User?          @relation("SellerApprovedBy", fields: [approvedByUserId], references: [id], onDelete: SetNull)
+  deals           Deal[]
+  sellerReviews   SellerReview[]
 }
 
 model Deal {
@@ -91,4 +106,19 @@ model Review {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   deal Deal @relation(fields: [dealId], references: [id], onDelete: Cascade)
+}
+
+model SellerReview {
+  id        String   @id @default(uuid())
+  userId    String
+  sellerId  String
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  seller Seller @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, sellerId])
 }

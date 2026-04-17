@@ -1,7 +1,18 @@
 import type {Metadata} from 'next';
+import { Manrope, Playfair_Display } from 'next/font/google';
 import './globals.css'; // Global styles
 import { Navbar } from '@/components/layout/navbar';
 import { Footer } from '@/components/layout/footer';
+
+const manrope = Manrope({
+  subsets: ['latin'],
+  variable: '--font-manrope',
+});
+
+const playfair = Playfair_Display({
+  subsets: ['latin'],
+  variable: '--font-playfair',
+});
 
 export const metadata: Metadata = {
   title: 'FoodSaver BD | Save Food. Save Money.',
@@ -19,7 +30,10 @@ export const metadata: Metadata = {
 export default function RootLayout({children}: {children: React.ReactNode}) {
   return (
     <html lang="en">
-      <body className="min-h-screen flex flex-col bg-slate-50 text-slate-900" suppressHydrationWarning>
+      <body
+        className={`${manrope.variable} ${playfair.variable} min-h-screen flex flex-col bg-slate-50 text-slate-900 font-[family-name:var(--font-manrope)]`}
+        suppressHydrationWarning
+      >
         <Navbar />
         <main className="flex-1">{children}</main>
         <Footer />

@@ -1,51 +1,79 @@
-import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
-import { signToken } from '@/lib/auth';
+import { NextResponse } from 'next/server';
+import { Role, SellerApprovalStatus } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
+import { signAppToken } from '@/lib/auth';
 
 export async function POST(req: Request) {
   try {
     const { email, password, name, role, businessName, address, phone } = await req.json();
+    const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
+    const normalizedName = typeof name === 'string' ? name.trim() : '';
+    const normalizedPassword = typeof password === 'string' ? password : '';
+    const requestedRole = role === Role.SELLER ? Role.SELLER : Role.CUSTOMER;
 
-    if (!email || !password || !name) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    if (!normalizedEmail || !normalizedPassword || !normalizedName) {
+      return NextResponse.json({ error: 'Name, email, and password are required' }, { status: 400 });
     }
 
-    const existingUser = await prisma.user.findUnique({ where: { email } });
-    if (existingUser) {
-      return NextResponse.json({ error: 'User already exists' }, { status: 400 });
+    if (normalizedPassword.length < 6) {
+      return NextResponse.json({ error: 'Password must be at least 6 characters' }, { status: 400 });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const user = await prisma.user.create({
-      data: {
-        email,
-        password: hashedPassword,
-        name,
-        role: role || 'CUSTOMER',
-      },
+    const existingUser = await prisma.user.findUnique({
+      where: { email: normalizedEmail },
     });
 
-    if (user.role === 'SELLER') {
-      if (!businessName || !address || !phone) {
-        return NextResponse.json({ error: 'Missing seller details' }, { status: 400 });
-      }
-      await prisma.seller.create({
-        data: {
-          userId: user.id,
-          businessName,
-          address,
-          phone,
-        },
-      });
+    if (existingUser) {
+      return NextResponse.json({ error: 'An account already exists for this email' }, { status: 400 });
     }
 
-    const token = signToken({ id: user.id, role: user.role });
+    const passwordHash = await bcrypt.hash(normalizedPassword, 10);
 
-    return NextResponse.json({ user: { id: user.id, email: user.email, name: user.name, role: user.role }, token });
+    const user = await prisma.$transaction(async (tx) => {
+      const createdUser = await tx.user.create({
+        data: {
+          email: normalizedEmail,
+          name: normalizedName,
+          password: passwordHash,
+          role: requestedRole,
+        },
+      });
+
+      if (requestedRole === Role.SELLER) {
+        await tx.seller.create({
+          data: {
+            userId: createdUser.id,
+            businessName: String(businessName || normalizedName).trim() || normalizedName,
+            address: String(address || 'Test seller address').trim() || 'Test seller address',
+            phone: String(phone || '0000000000').trim() || '0000000000',
+            approvalStatus: SellerApprovalStatus.APPROVED,
+            approvedAt: new Date(),
+          },
+        });
+      }
+
+      return createdUser;
+    });
+
+    const authToken = signAppToken({
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+    });
+
+    return NextResponse.json({
+      token: authToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+      },
+    });
   } catch (error) {
-    console.error('Registration error:', error);
+    console.error('Password signup error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
